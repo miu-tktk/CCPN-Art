@@ -21,9 +21,13 @@ class CPPN:
             'input': {'id': 0, 'type': 'input'},
             'output': {'id': 1, 'type': 'output'}
         }
-        self._add_layer(2, 5, 'hidden', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
-        self._add_layer(5, 5, 'hidden', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
-        self._add_layer(5, 3, 'output', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
+        # self._add_layer(2, 5, 'hidden', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
+        # self._add_layer(5, 5, 'hidden', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
+        # self._add_layer(5, 3, 'output', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
+        # 変更後
+        self._add_layer(2, 16, 'hidden', activation='sine')  # ノード数を16に
+        self._add_layer(16, 12, 'hidden', activation='tanh')
+        self._add_layer(12, 3, 'output', activation='sigmoid')
         self._update_connections()
 
         # # 入力レイヤーを明示的に追加 (id=0)
@@ -91,8 +95,8 @@ class CPPN:
             'id': layer_id,
             'input_size': in_size,
             'output_size': out_size,
-            'weights': np.random.randn(in_size, out_size) * 0.1,
-            'bias': np.random.randn(out_size) * 0.1,
+            'weights': np.random.randn(in_size, out_size) * 0.6,
+            'bias': np.random.randn(out_size) * 0.2,
             'activation': activation,
             'type': layer_type
         })
@@ -219,75 +223,74 @@ def tanh(x):
     return np.tanh(x)
 
 # CPPNの関数
-def cppn(x, y):
-    # 入力座標
-    r = np.sqrt(x**2 + y**2)  # 中心からの距離
+# def cppn(x, y):
+#     # 入力座標
+#     r = np.sqrt(x**2 + y**2)  # 中心からの距離
     
-    # 層の定義
-    h1 = sine(10 * r)  # 第一層: sin関数
-    h2 = tanh(h1 + x)  # 第二層: tanh関数
-    h3 = sigmoid(h2 + y)  # 第三層: sigmoid関数
+#     # 層の定義
+#     h1 = sine(10 * r)  # 第一層: sin関数
+#     h2 = tanh(h1 + x)  # 第二層: tanh関数
+#     h3 = sigmoid(h2 + y)  # 第三層: sigmoid関数
     
-    # 出力
-    return h3
+#     # 出力
+#     return h3
 
 def generate_image(cppn, width=64, height=64):
     """CPPNから画像を生成"""
     x = np.linspace(-1, 1, width)
     y = np.linspace(-1, 1, height)
     xx, yy = np.meshgrid(x, y)
+    # 追加
+    # r = np.sqrt(xx**2 + yy**2)  # 中心からの距離
+
     # inputs = np.stack([xx, yy], axis=-1).reshape(-1, 2)
-    inputs = np.stack([xx, yy], axis=-1)
-    print(inputs)
+    inputs = np.stack([xx, yy], axis=-1).reshape(-1, 2)
+    # ここまで
     current = inputs
     # image = current.reshape(height, width, 3)  # 画像の形に変換
     for layer in sorted(cppn.layers, key=lambda l: l['type'] != 'input'):
         if layer['type'] == 'input':
             continue
-    for layer in sorted(cppn.layers, key=lambda l: l['type'] != 'input'):
-        # current = np.dot(current, layer['weights']) + layer['bias']
+    # 重みの次元を確認する
+        # print(f"Layer {i}: weights shape = {layer['weights'].shape}, input shape = {current.shape}")
+
+        # 行列計算を実行
+        # try:
+        #     current = np.dot(current, layer['weights']) + layer['bias']
+        # except ValueError as e:
+        #     print(f"Error in layer {i}: {e}")
+        #     return None
+
+        current = np.dot(current, layer['weights']) + layer['bias']
         activation = layer['activation']
-        for i in range(width):
-            for j in range(height):
-                if activation == 'tanh':
-                    r = tann(current)
-                    g = tann(current)
-                    b = tann(current)
-                elif activation == 'sigmoid':
-                    r = sigmoid(current)
-                    g = sigmoid(current)
-                    b = sigmoid(current)
-                elif activation == 'sine':
-                    r = sine(current)
-                    g = sine(current)
-                    b = sine(current)
-                current[i, j] = np.concatenate([r, g, b], axis=0)
-        # if activation == 'tanh':
-        #     current = tanh(current)
-        # elif activation == 'sigmoid':
-        #     # current = 1 / (1 + np.exp(-current))
-        #     current = sigmoid(current)
-        # elif activation == 'sine':
-        #     # current = np.maximum(0, current)
-        #     current = sine(current)
-
-
-
-    image = current.reshape(height, width, 3)  # 画像の形に変換
+        if activation == 'tanh':
+            current = tanh(current)
+        elif activation == 'sigmoid':
+            # current = 1 / (1 + np.exp(-current))
+            current = sigmoid(current)
+        elif activation == 'sine':
+            # current = np.maximum(0, current)
+            current = sine(current)
+    # 出力データの形状を確認
+    print(f"Final output shape: {current.shape}")
+    # 追加
+    # current = sigmoid(current)
+    # ここまで
+    image = current.reshape(height, width, 3)
     return (np.clip(image, 0, 1) * 255).astype(np.uint8)
 
-# 2D空間の座標を生成
-def generate_coordinates(size):
-    x = np.linspace(-1, 1, size)
-    y = np.linspace(-1, 1, size)
-    xv, yv = np.meshgrid(x, y)
-    return xv, yv
+# # 2D空間の座標を生成
+# def generate_coordinates(size):
+#     x = np.linspace(-1, 1, size)
+#     y = np.linspace(-1, 1, size)
+#     xv, yv = np.meshgrid(x, y)
+#     return xv, yv
 
-# パターンを生成
-def generate_pattern(size):
-    xv, yv = generate_coordinates(size)
-    pattern = cppn(xv, yv)
-    return pattern
+# # パターンを生成
+# def generate_pattern(size):
+#     xv, yv = generate_coordinates(size)
+#     pattern = cppn(xv, yv)
+#     return pattern
 
 def display_images(favored_images, unfavored_images):
     # """非ブロッキングで画像をグリッド表示"""
