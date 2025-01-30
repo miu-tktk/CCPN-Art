@@ -2,79 +2,28 @@ import numpy as np
 import networkx as nx
 import matplotlib.pyplot as plt
 from constant_values import con
-from collections import deque
+import matplotlib
+import tkinter as tk
+matplotlib.use('TkAgg')
+
 
 class CPPN:
     def __init__(self, copy_from=None):
         self.innovations = {}  # イノベーション番号管理
         self.connections = []  # 接続エッジリスト
         self.layers = []       # レイヤー情報
-        
+
         if copy_from is None:
             self._initialize_new_network()
         else:
             self._copy_existing_network(copy_from)
 
     def _initialize_new_network(self):
-        # 初期ネットワーク構造（入力層、隠れ層、出力層）
-        nodes = {
-            'input': {'id': 0, 'type': 'input'},
-            'output': {'id': 1, 'type': 'output'}
-        }
-        # self._add_layer(2, 5, 'hidden', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
-        # self._add_layer(5, 5, 'hidden', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
-        # self._add_layer(5, 3, 'output', activation=np.random.choice(['tanh', 'sigmoid', 'sine']))
-        # 変更後
+
         self._add_layer(2, 16, 'hidden', activation='sine')  # ノード数を16に
         self._add_layer(16, 12, 'hidden', activation='tanh')
         self._add_layer(12, 3, 'output', activation='sigmoid')
         self._update_connections()
-
-        # # 入力レイヤーを明示的に追加 (id=0)
-        # self.layers.append({
-        #     'id': 0,
-        #     'input_size': 2,   # CPPNにおける(x, y)
-        #     'output_size': 2,  # そのまま2次元を渡す
-        #     'weights': np.identity(2),  # 単位行列を入れておく（またはランダムでもOK）
-        #     'bias': np.zeros(2),
-        #     'activation': 'linear',  # スキップさせたいなら実質的に恒等関数
-        #     'type': 'input'
-        # })
-
-        # layer_id = 1  # 次のレイヤーID
-        
-        # # ここから隠れ層をランダムに追加
-        # num_hidden_layers = np.random.randint(1, 5)
-        # possible_activations = ['tanh', 'sigmoid', 'sine']
-        
-        # prev_size = 2  # 入力レイヤーのoutput_size=2が隠れ層への入力サイズになる
-        # for _ in range(num_hidden_layers):
-        #     hidden_size = np.random.randint(4, 16)
-        #     self.layers.append({
-        #         'id': layer_id,
-        #         'input_size': prev_size,
-        #         'output_size': hidden_size,
-        #         'weights': np.random.randn(prev_size, hidden_size) * 0.5,
-        #         'bias': np.random.randn(hidden_size) * 0.5,
-        #         'activation': np.random.choice(possible_activations),
-        #         'type': 'hidden'
-        #     })
-        #     prev_size = hidden_size
-        #     layer_id += 1
-        
-        # # 出力層 (idは最後)
-        # self.layers.append({
-        #     'id': layer_id,
-        #     'input_size': prev_size,
-        #     'output_size': 3,  # RGB
-        #     'weights': np.random.randn(prev_size, 3) * 0.5,
-        #     'bias': np.random.randn(3) * 0.5,
-        #     'activation': np.random.choice(possible_activations),
-        #     'type': 'output'
-        # })
-        
-        # # 接続とDAGチェック
-        # self._update_connections()
 
     def _copy_existing_network(self, source):
         self.innovations = source.innovations.copy()
@@ -95,8 +44,8 @@ class CPPN:
             'id': layer_id,
             'input_size': in_size,
             'output_size': out_size,
-            'weights': np.random.randn(in_size, out_size) * 0.6,
-            'bias': np.random.randn(out_size) * 0.2,
+            'weights': np.random.randn(in_size, out_size) * 2.0,
+            'bias': np.random.randn(out_size) * 0.5,
             'activation': activation,
             'type': layer_type
         })
@@ -104,7 +53,6 @@ class CPPN:
 
     def _update_connections(self):
         self.connections = []
-        # sorted_layers = sorted(self.layers, key=lambda x: x['type'] != 'input')
         sorted_layers = sorted(self.layers, key=lambda x: x['id'])
         for i in range(len(sorted_layers)-1):
             self.connections.append((sorted_layers[i]['id'], sorted_layers[i+1]['id']))
@@ -174,7 +122,6 @@ class CPPN:
         v_layer['input_size'] = new_size
         v_layer['weights'] = np.random.randn(new_size, v_layer['output_size']) * 0.1
 
-
     def _remove_random_layer(self):
         if len(self.layers) <= 3:
             return
@@ -213,104 +160,46 @@ class CPPN:
             self.connections.append(new_conn)
             self._ensure_dag()
 
+
 def sigmoid(x):
     return (1 / (1 + np.exp(-x)))*100
+
 
 def sine(x):
     return np.sin(x)
 
+
 def tanh(x):
     return np.tanh(x)
 
-# CPPNの関数
-# def cppn(x, y):
-#     # 入力座標
-#     r = np.sqrt(x**2 + y**2)  # 中心からの距離
-    
-#     # 層の定義
-#     h1 = sine(10 * r)  # 第一層: sin関数
-#     h2 = tanh(h1 + x)  # 第二層: tanh関数
-#     h3 = sigmoid(h2 + y)  # 第三層: sigmoid関数
-    
-#     # 出力
-#     return h3
 
 def generate_image(cppn, width=64, height=64):
     """CPPNから画像を生成"""
     x = np.linspace(-1, 1, width)
     y = np.linspace(-1, 1, height)
     xx, yy = np.meshgrid(x, y)
-    # 追加
-    # r = np.sqrt(xx**2 + yy**2)  # 中心からの距離
-
-    # inputs = np.stack([xx, yy], axis=-1).reshape(-1, 2)
     inputs = np.stack([xx, yy], axis=-1).reshape(-1, 2)
     # ここまで
     current = inputs
-    # image = current.reshape(height, width, 3)  # 画像の形に変換
     for layer in sorted(cppn.layers, key=lambda l: l['type'] != 'input'):
         if layer['type'] == 'input':
             continue
-    # 重みの次元を確認する
-        # print(f"Layer {i}: weights shape = {layer['weights'].shape}, input shape = {current.shape}")
-
-        # 行列計算を実行
-        # try:
-        #     current = np.dot(current, layer['weights']) + layer['bias']
-        # except ValueError as e:
-        #     print(f"Error in layer {i}: {e}")
-        #     return None
 
         current = np.dot(current, layer['weights']) + layer['bias']
         activation = layer['activation']
         if activation == 'tanh':
             current = tanh(current)
         elif activation == 'sigmoid':
-            # current = 1 / (1 + np.exp(-current))
             current = sigmoid(current)
         elif activation == 'sine':
-            # current = np.maximum(0, current)
             current = sine(current)
     # 出力データの形状を確認
     print(f"Final output shape: {current.shape}")
-    # 追加
-    # current = sigmoid(current)
-    # ここまで
     image = current.reshape(height, width, 3)
     return (np.clip(image, 0, 1) * 255).astype(np.uint8)
 
-# # 2D空間の座標を生成
-# def generate_coordinates(size):
-#     x = np.linspace(-1, 1, size)
-#     y = np.linspace(-1, 1, size)
-#     xv, yv = np.meshgrid(x, y)
-#     return xv, yv
-
-# # パターンを生成
-# def generate_pattern(size):
-#     xv, yv = generate_coordinates(size)
-#     pattern = cppn(xv, yv)
-#     return pattern
 
 def display_images(favored_images, unfavored_images):
-    # """非ブロッキングで画像をグリッド表示"""
-    # n = len(images)
-    # rows = int(np.ceil(n / 5))
-    # cols = min(n, 5)
-    
-    # fig, axes = plt.subplots(rows, cols, figsize=(cols*2, rows*2))
-    # if rows == 1 and cols == 1:
-    #     axes = np.array([axes])
-        
-    # for idx, (ax, img) in enumerate(zip(axes.flat, images), start=1):
-    #     ax.imshow(img)
-    #     ax.axis('off')
-    #     ax.text(5, 5, str(idx), color="white", fontsize=12, 
-    #             bbox=dict(facecolor='black', alpha=0.5, edgecolor='none'))
-    
-    # plt.tight_layout()
-    # plt.draw()
-    # plt.pause(0.1)  # 画像を短時間表示
 
     """favored と unfavored の画像を横に並べて表示"""
     
@@ -324,6 +213,12 @@ def display_images(favored_images, unfavored_images):
     cols = con.EVOLUTION_POPULATION_SIZE
 
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 2, rows * 2))
+
+    # ウィンドウの位置を固定
+    root = tk.Tk()
+    root.withdraw()  # メインウィンドウを隠す
+    # ウィンドウの位置を固定
+    fig.canvas.manager.window.wm_geometry("640x550+40+10")
 
     # 1行1列の場合の調整
     if rows == 1 and cols == 2:
@@ -355,71 +250,20 @@ def get_user_favor_selection(population_size):
             selected = input(f"一番好きな画像の番号を入力 (1-{int(population_size / 2)}): ").strip()
             if not selected or int(selected) > int(population_size / 2):
                 raise ValueError(f"入力が空もしくは適切に選択されていません。1から{int(population_size / 2)}の間で選択してください。")
-            
-            # elif selected >= int(population_size / 2):
-            #     print(f"0から{population_size / 2}の範囲で入力してください")
 
             indices = list(map(int, selected.split(',')))
             if all(0 <= i < population_size for i in indices):
                 # return indices, selected
                 return indices
-                
+
             print(f"1から{population_size / 2}の範囲で入力してください")
-            
+
         except ValueError as e:
             print(f"無効な入力です: {e}")
         except KeyboardInterrupt:
             print("\nプログラムを終了します")
             exit(0)
 
-# def get_user_unlike_selection(population_size):
-#     """安全なユーザー入力処理"""
-#     indices, selected = get_user_favor_selection(population_size)
-#     while True:
-#         try:
-#             # selected = input(f"一番嫌いな画像の番号をカンマ区切りで入力 (1-{population_size}): ").strip()
-#             unselected = 1 - int(selected)
-#             # 選んだもののインデックスを計算
-#             if not unselected:
-#                 raise ValueError("入力が空です")
-                
-#             indices = list(map(int, unselected.split(',')))
-#             if all(0 <= i < population_size for i in indices):
-#                 return indices
-                
-#             print(f"1から{population_size}の範囲で入力してください")
-            
-#         except ValueError as e:
-#             print(f"無効な入力です: {e}")
-#         except KeyboardInterrupt:
-#             print("\nプログラムを終了します")
-#             exit(0)
-
-#変更版
-# def get_user_unlike_selection(population_size):
-#     # listが渡される
-#     selected_indices = get_user_favor_selection(population_size) 
-#     """安全なユーザー入力処理"""
-#     while True:
-#         try:
-#             selected = input(f"一番嫌いな画像の番号をカンマ区切りで入力 (1-{population_size}): ").strip()
-#             if not selected:
-#                 raise ValueError("入力が空です")
-                
-#             indices = list(map(int, selected.split(',')))
-#             if all(0 <= i < population_size for i in indices):
-#                 return indices
-                
-#             print(f"1から{population_size}の範囲で入力してください")
-            
-#         except ValueError as e:
-#             print(f"無効な入力です: {e}")
-#         except KeyboardInterrupt:
-#             print("\nプログラムを終了します")
-#             exit(0)
-#     indices = 1 - selected_indices
-#     return indices
-    
 
 def create_next_generation(selected_cppns, population_size):
     """選択されたCPPNから次世代を生成 (DAGであることを保証)"""
@@ -434,8 +278,8 @@ def create_next_generation(selected_cppns, population_size):
         # 特定の親から子を作成することを複数回リトライ
         for attempt in range(max_attempts):
             child = CPPN(copy_from=parent)
-            child.mutate()  
-            
+            child.mutate()
+
             # DAGチェック
             try:
                 child._ensure_dag()  # networkx等でDAGかどうかをチェック
@@ -446,7 +290,7 @@ def create_next_generation(selected_cppns, population_size):
                 # DAGであれば次世代に採用してリトライを打ち切る
                 next_gen.append(child)
                 break
-        
+
         else:
             # for-else文：max_attempts回リトライしてもDAGが作れない場合
             raise RuntimeError("Valid DAG child could not be generated after multiple attempts.")
@@ -455,6 +299,7 @@ def create_next_generation(selected_cppns, population_size):
 
     return next_gen
 
+
 def main():
     population = [CPPN() for _ in range(con.EVOLUTION_POPULATION_SIZE)]
     try:
@@ -462,7 +307,6 @@ def main():
             print(f"\nGeneration {gen + 1}/{con.EVOLUTION_GENERATIONS}")
             unselected_cppn_history = []
             if gen == 0:
-                # size = 100
                 favored_images = [generate_image(cppn) for cppn in population][:2]
                 unfavored_images = [generate_image(cppn) for cppn in population][2:]
                 display_images(favored_images, unfavored_images)
@@ -472,10 +316,8 @@ def main():
                 favored_images = [generate_image(cppn) for cppn in favored_population]
                 unfavored_images = [generate_image(cppn) for cppn in unfavored_population]
                 display_images(favored_images, unfavored_images)
-                # display_images(unfavored_images)
 
             # ユーザー選択
-            # selected_indices, selected = get_user_favor_selection(con.EVOLUTION_POPULATION_SIZE)
             selected_indices = get_user_favor_selection(con.EVOLUTION_POPULATION_SIZE)
             selected_cppns = [population[i] for i in selected_indices]
             unselected_cppns = [item for item in population if item not in selected_cppns]
@@ -487,25 +329,16 @@ def main():
                 unfavored_population = create_next_generation(unselected_cppn_history, int(con.EVOLUTION_POPULATION_SIZE / 2))
             else:
                 unfavored_population = create_next_generation(unselected_cppn_history[:gen], int(con.EVOLUTION_POPULATION_SIZE / 2))
-            # 変更
-            # unselected_indices, selected = get_user_unlike_selection(con.EVOLUTION_POPULATION_SIZE)
-            # selected_cppns = [population[i] for i in selected_indices]
-            # unselected_cppns = [population[i] for i in unselected_indices]
-
-            
-            # 次世代生成
-            # favored_population = create_next_generation(selected_cppns, int(con.EVOLUTION_POPULATION_SIZE / 2))
-            # unfavored_population = create_next_generation(unselected_cppns, int(con.EVOLUTION_POPULATION_SIZE / 2))
-            
             # 前の画像をクリア
             plt.close('all')
-            
+
         print("\n進化が正常に完了しました")
-        
+
     except KeyboardInterrupt:
         print("\nユーザーによって中断されました")
     finally:
         plt.close('all')
+
 
 if __name__ == "__main__":
     main()

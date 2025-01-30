@@ -5,6 +5,7 @@ from constant_values import con
 
 # matplotlib.use("TkAgg")  
 
+
 class CPPN:
     def __init__(self, copy_from=None):
         if copy_from is None:

@@ -1,12 +1,13 @@
 import yaml
 
+
 class Config:
     """設定情報を管理するクラス"""
 
     def __init__(self, config_file):
         with open(config_file, 'r') as file:
             config = yaml.safe_load(file)
-        
+
         # 各設定をクラス属性として登録
         self.EVOLUTION_GENERATIONS = config["evolution"]["generations"]
         self.EVOLUTION_POPULATION_SIZE = config["evolution"]["population_size"]
@@ -21,6 +22,7 @@ class Config:
 
         self.IMAGE_WIDTH = config["image"]["width"]
         self.IMAGE_HEIGHT = config["image"]["height"]
+
 
 # 設定ファイルを読み込み、Configクラスのインスタンスを生成
 con = Config("cppn.yaml")
