@@ -227,14 +227,14 @@ def display_images(favored_images, unfavored_images):
     for idx, (ax, img) in enumerate(zip(axes.flat[:n_favored], favored_images), start=1):
         ax.imshow(img)
         ax.axis('off')
-        ax.text(5, 5, f"F{idx}", color="white", fontsize=12, 
+        ax.text(5, 15, f"F{idx}", color="white", fontsize=12, 
                 bbox=dict(facecolor='black', alpha=0.5, edgecolor='none'))
 
     # Unfavored（右側）
     for idx, (ax, img) in enumerate(zip(axes.flat[n_favored:], unfavored_images), start=1):
         ax.imshow(img)
         ax.axis('off')
-        ax.text(5, 5, f"U{idx}", color="white", fontsize=12, 
+        ax.text(5, 15, f"U{idx}", color="white", fontsize=12, 
                 bbox=dict(facecolor='red', alpha=0.5, edgecolor='none'))
 
     plt.tight_layout()
