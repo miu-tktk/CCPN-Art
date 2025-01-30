@@ -173,7 +173,7 @@ def tanh(x):
     return np.tanh(x)
 
 
-def generate_image(cppn, width=64, height=64):
+def generate_image(cppn, width=256, height=256):
     """CPPNから画像を生成"""
     x = np.linspace(-1, 1, width)
     y = np.linspace(-1, 1, height)
@@ -205,8 +205,6 @@ def display_images(favored_images, unfavored_images):
     
     # 画像の最大数を取得（favored, unfavored のどちらか多い方）
     n_favored = len(favored_images)
-    n_unfavored = len(unfavored_images)
-    n = con.EVOLUTION_POPULATION_SIZE
 
     # # 画像の表示レイアウトを決定
     rows = 1 
@@ -218,7 +216,7 @@ def display_images(favored_images, unfavored_images):
     root = tk.Tk()
     root.withdraw()  # メインウィンドウを隠す
     # ウィンドウの位置を固定
-    fig.canvas.manager.window.wm_geometry("640x550+40+10")
+    fig.canvas.manager.window.wm_geometry("1500x500+40+10")
 
     # 1行1列の場合の調整
     if rows == 1 and cols == 2:

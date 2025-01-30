@@ -1,0 +1,5 @@
+matplotlib==3.10.0
+networkx==3.4.2
+numpy==2.2.2
+pygame==2.6.1
+PyYAML==6.0.2
