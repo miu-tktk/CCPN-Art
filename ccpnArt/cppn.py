@@ -95,8 +95,8 @@ class CPPN:
             'id': layer_id,
             'input_size': in_size,
             'output_size': out_size,
-            'weights': np.random.randn(in_size, out_size) * 0.6,
-            'bias': np.random.randn(out_size) * 0.2,
+            'weights': np.random.randn(in_size, out_size) * 2.0,
+            'bias': np.random.randn(out_size) * 0.5,
             'activation': activation,
             'type': layer_type
         })
